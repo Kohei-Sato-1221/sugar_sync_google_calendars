@@ -1,0 +1,2 @@
+# sugar_sync_google_calendars
+複数のGoogleカレンダーを同期するためのGoogle Script
