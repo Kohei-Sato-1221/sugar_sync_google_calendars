@@ -6,7 +6,7 @@ function syncCalendarEvents() {
   const privatePlan = true; //true:予定のタイトルや説明を隠してターゲットのカレンダーに予定を作成。タイトルは「🙅‍♂️ Block_synced」となる。
   // const privatePlan = false; //false:タイトルや説明をそのままコピーしてターゲットのカレンダーに予定を作成。
   
-  const destCalendarId = 'hogehoge@sample.com'; //予定を同期する先のカレンダーID or Email（複数設定可能）
+  const destCalendarId = 'hogehoge@sample.com'; //予定を同期する先のカレンダーID or Email
   const sourceCalendarIds = [ //予定を同期する元のカレンダーID or Email（複数設定可能）
     'source01@sample.com',
     'source02@sample.com'
