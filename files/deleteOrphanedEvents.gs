@@ -1,16 +1,18 @@
 /**
  * 同期元から削除された予定を、同期先から削除します。
  */
-function deleteOrphanedEvents(sourceCalendarIds, destCalendar, privatePlan, startTime, endTime) {
+function deleteOrphanedEvents(sourceCalendarEmails, destCalendar, privatePlan, startTime, endTime) {
   const myEmail = Session.getActiveUser().getEmail(); // スクリプト実行者のメールアドレスを取得
+  const myKey = getKeyByEmail(myEmail);
   const sourceEventIdentifiers = new Set();
   
-  sourceCalendarIds.forEach(sourceCalendarId => {
-    const sourceCalendar = CalendarApp.getCalendarById(sourceCalendarId);
+  sourceCalendarEmails.forEach(sourceCalendarEmail => {
+    const sourceCalendar = CalendarApp.getCalendarById(sourceCalendarEmail);
+    const sourceKey = getKeyByEmail(sourceCalendarEmail);
     const events = sourceCalendar.getEvents(startTime, endTime);
 
     events.forEach(event => {
-      if (isExcludedEvent(event)) {
+      if (isExcludedEvent(event, myKey)) {
         return;
       }
 
@@ -19,20 +21,21 @@ function deleteOrphanedEvents(sourceCalendarIds, destCalendar, privatePlan, star
       const eventEndTime = event.getEndTime();
 
       if (privatePlan) {
-        const eventHash = Utilities.base64Encode(
-          Utilities.newBlob(
-            originalTitle + eventStartTime.getTime() + eventEndTime.getTime() + sourceCalendarId
-          ).getBytes()
-        );
-        sourceEventIdentifiers.add(`_hash:${eventHash}_`);
+        description = getHashedDescriptionForPrivatePlan(originalTitle, eventStartTime, eventEndTime, sourceCalendarEmail)
+        sourceEventIdentifiers.add(description);
       } else {
-        sourceEventIdentifiers.add(originalTitle + '_synced');
+        sourceEventIdentifiers.add(originalTitle + '_' + sourceKey + '_synced');
       }
     });
   });
 
   const existingEvents = destCalendar.getEvents(startTime, endTime);
   existingEvents.forEach(existingEvent => {
+    // syncedがサフィックスにない場合は削除対象外
+    if (!existingEvent.getTitle().endsWith('_synced')) {
+       Logger.log(`Skipped deletion of event '${existingEvent.getTitle()}' because it does not has _synced suffix`);
+    }
+
     // 自分以外の参加者がいるか確認
     const hasOtherAttendees = existingEvent.getGuestList().some(guest => {
       // ゲストのメールアドレスが自分のメールアドレスと異なり、かつゲストが招待済みの場合
@@ -50,11 +53,13 @@ function deleteOrphanedEvents(sourceCalendarIds, destCalendar, privatePlan, star
 
     if (privatePlan) {
       const description = existingEvent.getDescription();
-      if (description && description.startsWith('_hash:') && description.endsWith('_')) {
-        identifier = description;
-        // privatePlanの同期済みイベントのタイトルは '🙅‍♂️ Block_synced' なので、それを確認
-        isSyncedEvent = existingEvent.getTitle() === '🙅‍♂️ Block_synced';
-      }
+      identifier = description;
+      // privatePlanの同期済みイベントのタイトルは '🙅‍♂️ Block_xxxx_synced' なので、それを確認
+      isSyncedEvent = existingEvent.getTitle().startsWith('🙅‍♂️ Block_') &&
+        existingEvent.getTitle().endsWith('_synced') && 
+        description &&
+        description.startsWith('_hash:') &&
+        description.endsWith('_');
     } else {
       identifier = existingEvent.getTitle();
       // publicPlanの同期済みイベントのタイトルは '_synced' で終わるので、それを確認
@@ -64,7 +69,9 @@ function deleteOrphanedEvents(sourceCalendarIds, destCalendar, privatePlan, star
     // 同期元のリストに存在せず、かつ同期済みイベントと判定できる場合に削除
     if (isSyncedEvent && identifier && !sourceEventIdentifiers.has(identifier)) {
         existingEvent.deleteEvent();
-        Logger.log(`Deleted event: ${existingEvent.getTitle()} from calendar: ${destCalendar.getId()}`);
+        Logger.log(`😱 Deleted event:${existingEvent.getTitle()} from calendar:${destCalendar.getId()}/${existingEvent.getStartTime()}~${existingEvent.getEndTime()}...`);
+    } else {
+        Logger.log(`😜 Not in Delete targets event: ${existingEvent.getTitle()} from calendar: ${destCalendar.getId()}`);
     }
   });
 }

@@ -1,13 +1,16 @@
 /**
  * 同期元のカレンダーに存在するが、同期先に存在しない予定を作成します。
  */
-function processSourceEvents(sourceCalendarIds, destCalendar, privatePlan, startTime, endTime) {
-  sourceCalendarIds.forEach(sourceCalendarId => {
-    const sourceCalendar = CalendarApp.getCalendarById(sourceCalendarId);
+function processSourceEvents(sourceCalendarEmails, destCalendar, privatePlan, startTime, endTime) {
+  const myEmail = Session.getActiveUser().getEmail(); // スクリプト実行者のメールアドレスを取得
+  const myKey = getKeyByEmail(myEmail);
+  sourceCalendarEmails.forEach(sourceCalendarEmail => {
+    const sourceCalendar = CalendarApp.getCalendarById(sourceCalendarEmail);
+    const sourceKey = getKeyByEmail(sourceCalendarEmail);
     const events = sourceCalendar.getEvents(startTime, endTime);
 
     events.forEach(event => {
-      if (isExcludedEvent(event)) {
+      if (isExcludedEvent(event, myKey)) {
         return;
       }
       
@@ -18,17 +21,12 @@ function processSourceEvents(sourceCalendarIds, destCalendar, privatePlan, start
 
       let newTitle;
       let newDescription;
-      const eventHash = Utilities.base64Encode(
-        Utilities.newBlob(
-          originalTitle + eventStartTime.getTime() + eventEndTime.getTime() + sourceCalendarId
-        ).getBytes()
-      );
       
       if (privatePlan) {
-        newTitle = '🙅‍♂️ Block_synced';
-        newDescription = `_hash:${eventHash}_`;
+        newTitle = '🙅‍♂️ Block' + '_' + sourceKey + '_synced';
+        newDescription = getHashedDescriptionForPrivatePlan(originalTitle, eventStartTime, eventEndTime, sourceCalendarEmail)
       } else {
-        newTitle = originalTitle + '_synced';
+        newTitle = originalTitle + '_' + sourceKey + '_synced';
         
         const attendees = event.getGuestList();
         const attendeeEmails = attendees.map(attendee => attendee.getEmail());
@@ -41,16 +39,7 @@ function processSourceEvents(sourceCalendarIds, destCalendar, privatePlan, start
         }
       }
 
-      // 既存のイベントの存在チェック（タイトル/ハッシュ値による重複判定）
       const existingEvents = destCalendar.getEvents(eventStartTime, eventEndTime);
-      const eventExists = existingEvents.some(existingEvent => {
-        if (privatePlan) {
-          return existingEvent.getDescription() && existingEvent.getDescription().includes(`_hash:${eventHash}_`);
-        } else {
-          const syncedTitle = originalTitle + '_synced';
-          return existingEvent.getTitle() === syncedTitle && existingEvent.getStartTime().getTime() === eventStartTime.getTime();
-        }
-      });
       
       // 同じ時間帯の予定がすでに存在するかをチェックする新しいロジック
       const sameTimeEventExists = existingEvents.some(existingEvent => {
@@ -63,7 +52,7 @@ function processSourceEvents(sourceCalendarIds, destCalendar, privatePlan, start
         return existingStartTime === newStartTime && existingEndTime === newEndTime;
       });
 
-      if (!eventExists && !sameTimeEventExists) {
+      if (!sameTimeEventExists) {
         destCalendar.createEvent(newTitle, eventStartTime, eventEndTime, {
           description: newDescription,
           visibility: privatePlan ? CalendarApp.Visibility.PRIVATE : CalendarApp.Visibility.PUBLIC
