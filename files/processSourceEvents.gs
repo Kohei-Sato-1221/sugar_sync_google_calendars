@@ -6,6 +6,9 @@ function processSourceEvents(sourceCalendarEmails, destCalendar, privatePlan, st
   const myKey = getKeyByEmail(myEmail);
   sourceCalendarEmails.forEach(sourceCalendarEmail => {
     const sourceCalendar = CalendarApp.getCalendarById(sourceCalendarEmail);
+    if (!sourceCalendar) {
+      return;
+    }
     const sourceKey = getKeyByEmail(sourceCalendarEmail);
     const events = sourceCalendar.getEvents(startTime, endTime);
 
