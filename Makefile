@@ -13,6 +13,10 @@ login: ## login to google for clasp
 	clasp login
 
 clone: ## clone google apps script project  ## clone id={script_id}
+	rm -rf workspace/*.js
+	rm -rf workspace/*.gs
+	rm -rf workspace/*.json
+	rm -rf workspace/.clasp.json
 	cd workspace && clasp clone ${id}
 
 deploy: ## deploy google apps script project
