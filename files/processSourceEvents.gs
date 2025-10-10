@@ -17,6 +17,13 @@ function processSourceEvents(sourceCalendarEmails, destCalendar, privatePlan, st
         return;
       }
       
+      // 自身が不参加を表明しているイベントはスキップ
+      const myStatus = event.getMyStatus();
+      if (myStatus === CalendarApp.GuestStatus.NO) {
+        Logger.log(`Skipped event because declined: ${event.getTitle()}`);
+        return;
+      }
+      
       const originalTitle = event.getTitle();
       let originalDescription = event.getDescription();
       const eventStartTime = event.getStartTime();

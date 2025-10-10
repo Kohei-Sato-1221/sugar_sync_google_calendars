@@ -19,6 +19,14 @@ function deleteOrphanedEvents(sourceCalendarEmails, destCalendar, privatePlan, s
         return;
       }
 
+      // 自身が不参加を表明しているイベントは同期元リストに追加しない
+      // （これにより、不参加イベントは同期先から削除される）
+      const myStatus = event.getMyStatus();
+      if (myStatus === CalendarApp.GuestStatus.NO) {
+        Logger.log(`Event declined, will be deleted from dest: ${event.getTitle()}`);
+        return;
+      }
+
       const originalTitle = event.getTitle();
       const eventStartTime = event.getStartTime();
       const eventEndTime = event.getEndTime();
