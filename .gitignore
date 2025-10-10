@@ -1,1 +1,4 @@
-consts_sugar.gs
+consts_?.js
+consts_?.gs
+workspace/
+workspace/*

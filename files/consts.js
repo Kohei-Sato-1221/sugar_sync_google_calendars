@@ -1,6 +1,40 @@
 //=============================================================================
 //  EmailとKeyのマップ定義
+//
+// こちらのファイルは各アカウントに合わせて修正を行なった上で使用すること。
+// 修正対象：
+// - SOURCE_CALENDAR_KEY
+// - DEST_CALENDAR_KEYS
+// - KEY_EMAIL_PAIRS
+// - SYNC_DAYS
+// - PRIVATE_PLAN
 //=============================================================================
+
+/**
+ * 同期元のカレンダーKey
+ * @type {string}
+ */
+const SOURCE_CALENDAR_KEY = 'sample01';
+
+/**
+ * 同期先のカレンダーKey
+ * @type {string[]}
+ */
+const DEST_CALENDAR_KEYS = ['sample02', 'sample03'];
+
+/**
+ * 何日分先まで同期をするか
+ * @type {number}
+ */
+const SYNC_DAYS = 30;
+
+/**
+ * プライベートプラン設定
+ * true: 予定のタイトルや説明を隠してターゲットのカレンダーに予定を作成。タイトルは「🙅‍♂️ Block_xxx_synced」となる。
+ * false: タイトルや説明をそのままコピーしてターゲットのカレンダーに予定を作成。
+ * @type {boolean}
+ */
+const PRIVATE_PLAN = true;
 
 /**
  * KeyとEmailのマッピング配列
