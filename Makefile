@@ -22,15 +22,3 @@ deploy: ## deploy google apps script project
 	cp files/processSourceEvents.js workspace/processSourceEvents.js
 	cp files/deleteOrphanedEvents.js workspace/deleteOrphanedEvents.js
 	cd workspace && clasp push
-
-deploy_sugar: ## deploy google apps script project
-	make clone id=1CpPJ6wDO8B5gwW9w5C0ugPKubmlgAWro4amjEDnBvlbsR3_i0u0Riqwj
-	cp files/consts_sugar.js files/consts_temp.js
-	cp files/consts_sugar.js files/consts.js
-	make deploy
-
-deploy_58: ## deploy google apps script project
-	make clone id=1iU70ADsfzHiJTAJzr_Uo4ZjWqqc7j3aLoZ_xNPvH06stAiu4TNr20L7G
-	cp files/consts_58.js files/consts_temp.js
-	cp files/consts_58.js files/consts.js
-	make deploy
