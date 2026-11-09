@@ -10,7 +10,13 @@
 	  Logger.log(`Skipped all-day event: ${title}`);
 	  return true;
 	}
-  
+
+	// 30分単位から1分ずらした予定（xx:01・xx:31開始、xx:29・xx:59終了）は同期しない
+	if (event.getStartTime().getMinutes() % 30 === 1 || event.getEndTime().getMinutes() % 30 === 29) {
+	  Logger.log(`Skipped event shifted by 1 minute: ${title}`);
+	  return true;
+	}
+
 	for (const prefix of prefixes) {
 	  if (title.startsWith(prefix)) {
 		Logger.log(`Skipped event with prefix '${prefix}': ${title}`);
